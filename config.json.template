@@ -9,7 +9,13 @@
     "streamSettings": {"network": "ws", "wsSettings": {"path": "/"}}
   }],
   "outbounds": [{
-    "protocol": "freedom",
-    "settings": {}
+    "protocol": "socks",
+    "tag": "socks5_outbound",
+    "settings": {
+      "servers": [{
+        "address": "127.0.0.1",
+        "port": 1080
+      }]
+    }
   }]
 }
