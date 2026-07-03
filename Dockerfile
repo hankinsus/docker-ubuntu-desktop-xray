@@ -2,11 +2,9 @@ FROM --platform=linux/amd64 ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update && apt install -y \
-    xfce4 xfce4-goodies xfce4-terminal \
-    tigervnc-standalone-server novnc \
-    python3-pip curl unzip wget procps net-tools iputils-ping jq \
-    fonts-wqy-microhei fonts-wqy-zenhei language-pack-zh-hans \
-    && rm -rf /var/lib/apt/lists/*
+    xfce4 xfce4-goodies tigervnc-standalone-server novnc \
+    python3-pip curl unzip wget procps jq \
+    fonts-wqy-microhei && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install websockify
 RUN wget https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip && \
@@ -20,5 +18,4 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /usr/local/bin/monitor.sh /entrypoint.sh && \
     cp /etc/xray/config.json.template /etc/xray/config.json
 
-ENV LANG=zh_CN.UTF-8
 CMD ["/entrypoint.sh"]
