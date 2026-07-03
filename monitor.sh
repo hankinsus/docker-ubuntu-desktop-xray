@@ -1,38 +1,38 @@
 #!/bin/bash
 CONFIG_FILE="/etc/xray/config.json"
 TEMPLATE="/etc/xray/config.json.template"
-# 使用订阅转换接口，将任何格式统一转换为 Xray 支持的 JSON
-SUB_URL="https://api.v1.mk/sub?target=v2ray&url=https://raw.githubusercontent.com/freefq/free/master/v2"
 
 update_node_logic() {
-    echo "正在从订阅转换接口获取节点配置..."
+    echo "正在从源直接解析节点..."
     
-    # 1. 获取订阅内容 (直接下载转换后的 JSON)
-    TEMP_JSON=$(mktemp)
-    if ! curl -s -L "$SUB_URL" > "$TEMP_JSON"; then
-        echo "订阅下载失败"
-        return 1
-    fi
+    # 1. 下载原始订阅
+    RAW_DATA=$(curl -s "https://raw.githubusercontent.com/freefq/free/master/v2" | base64 -d 2>/dev/null)
+    
+    # 2. 尝试解析第一行 ss:// 节点
+    # 格式: ss://method:password@host:port
+    FIRST_NODE=$(echo "$RAW_DATA" | grep "ss://" | head -n 1)
+    
+    if [[ -n "$FIRST_NODE" ]]; then
+        # 提取参数
+        STR=$(echo "$FIRST_NODE" | sed 's/ss:\/\///')
+        METHOD=$(echo "$STR" | cut -d: -f1)
+        PASSWORD=$(echo "$STR" | cut -d: -f2 | cut -d@ -f1)
+        HOST=$(echo "$STR" | cut -d@ -f2 | cut -d: -f1)
+        PORT=$(echo "$STR" | cut -d@ -f2 | cut -d: -f2)
 
-    # 2. 校验 JSON 是否合法，并提取第一个 outbound
-    if jq empty "$TEMP_JSON" >/dev/null 2>&1; then
-        # 注入转换后的配置到模板中
-        jq '.outbounds[0]' "$TEMP_JSON" > "$CONFIG_FILE"
-        echo "配置更新成功"
-        rm "$TEMP_JSON"
+        # 注入配置
+        jq --arg h "$HOST" --arg p "$PORT" --arg m "$METHOD" --arg ps "$PASSWORD" \
+          '.outbounds[0] = {protocol: "shadowsocks", settings: {servers: [{address: $h, port: ($p|tonumber), method: $m, password: $ps}]}}' \
+          "$TEMPLATE" > "$CONFIG_FILE"
         return 0
-    else
-        echo "JSON 格式错误，跳过更新"
-        rm "$TEMP_JSON"
-        return 1
     fi
+    return 1
 }
 
-# 主循环
 while true; do
-    # 测试连通性
+    # 这里的端口测试必须通过 xray 代理进行
     if ! curl -s --socks5 127.0.0.1:8080 http://www.google.com --connect-timeout 5 > /dev/null; then
-        echo "连接失败，执行热切换..."
+        echo "检测到连接失败，正在尝试手动切换..."
         if update_node_logic; then
             pkill xray
             sleep 2
