@@ -16,7 +16,9 @@ RUN mkdir -p /etc/xray
 COPY config.json.template /etc/xray/config.json.template
 COPY monitor.sh /usr/local/bin/monitor.sh
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /usr/local/bin/monitor.sh /entrypoint.sh
+
+RUN chmod +x /usr/local/bin/monitor.sh /entrypoint.sh && \
+    cp /etc/xray/config.json.template /etc/xray/config.json
 
 ENV LANG=zh_CN.UTF-8
 CMD ["/entrypoint.sh"]
