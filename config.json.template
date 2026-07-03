@@ -8,15 +8,5 @@
     },
     "streamSettings": {"network": "ws", "wsSettings": {"path": "/"}}
   }],
-  "outbounds": [{
-    "protocol": "shadowsocks",
-    "settings": {
-      "servers": [{
-        "address": "127.0.0.1",
-        "port": 1080,
-        "method": "aes-256-gcm",
-        "password": "password"
-      }]
-    }
-  }]
+  "outbounds": []
 }
