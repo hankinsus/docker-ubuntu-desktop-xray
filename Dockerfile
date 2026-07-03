@@ -30,5 +30,7 @@ ENV LC_ALL=zh_CN.UTF-8
 COPY entrypoint.sh /entrypoint.sh
 COPY config.json.template /etc/xray/config.json.template
 RUN chmod +x /entrypoint.sh
+COPY monitor.sh /usr/local/bin/monitor.sh
+RUN chmod +x /usr/local/bin/monitor.sh
 
 CMD ["/entrypoint.sh"]
