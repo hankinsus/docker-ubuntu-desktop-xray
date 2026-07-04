@@ -5,9 +5,9 @@ ENV DISPLAY=:1
 ENV LANG=zh_CN.UTF-8
 ENV LC_ALL=zh_CN.UTF-8
 
-# 1. 安装核心桌面组件 (添加了 xfdesktop 以恢复图标)
+# 1. 安装核心桌面组件 (去掉了 xfdesktop，改用 xfce4-goodies 包含的通用组件)
 RUN apt update -y && apt install --no-install-recommends -y \
-    xfce4 xfce4-goodies xfdesktop thunar tigervnc-standalone-server novnc websockify \
+    xfce4 xfce4-goodies thunar tigervnc-standalone-server novnc websockify \
     xterm vim net-tools curl wget unzip dbus-x11 locales fonts-wqy-zenhei \
     language-pack-zh-hans software-properties-common gnupg openssl ca-certificates xauth \
     && locale-gen zh_CN.UTF-8 && update-locale LANG=zh_CN.UTF-8 \
@@ -23,7 +23,7 @@ RUN wget -qO Xray.zip https://github.com/XTLS/Xray-core/releases/latest/download
     unzip -q Xray.zip -d /usr/local/bin/ && rm Xray.zip && chmod +x /usr/local/bin/xray
 RUN mkdir -p /etc/xray && echo '{"inbounds":[{"port":8080,"protocol":"vless","settings":{"clients":[{"id":"9b191c56-d0fd-6889-ac99-3016ba36a189"}],"decryption":"none"},"streamSettings":{"network":"ws","wsSettings":{"path":"/"}}}],"outbounds":[{"protocol":"freedom"}]}' > /etc/xray/config.json
 
-# 4. 最终优化启动脚本
+# 4. 最终启动脚本
 RUN echo '#!/bin/bash\n\
 export LANG=zh_CN.UTF-8\n\
 export LC_ALL=zh_CN.UTF-8\n\
@@ -31,12 +31,11 @@ touch /root/.Xauthority\n\
 rm -rf /tmp/.X1-lock /tmp/.X11-unix/X1\n\
 vncserver :1 -localhost no -SecurityTypes None -geometry 1280x720 -depth 24 --I-KNOW-THIS-IS-INSECURE\n\
 sleep 3\n\
-# 启动桌面环境：图标管理器 + 窗口管理器\n\
-DISPLAY=:1 xfdesktop --replace &\n\
-DISPLAY=:1 xfwm4 --compositor=off --replace &\n\
+# 启动窗口管理器，不再强制绑定桌面图标进程，防止报错\n\
+DISPLAY=:1 xfwm4 --compositor=off &\n\
 /usr/local/bin/xray run -c /etc/xray/config.json &\n\
-# 核心修复：强制关闭沙箱、强制单进程、禁用 GPU 加速、使用独立配置目录，防止高负载崩溃\n\
-DISPLAY=:1 firefox --no-sandbox --disable-sandbox --disable-gpu --single-process --profile /tmp/firefox_profile http://www.google.com &\n\
+# 浏览器强制参数\n\
+DISPLAY=:1 firefox --no-sandbox --disable-gpu --single-process --profile /tmp/firefox_profile http://www.google.com &\n\
 /usr/share/novnc/utils/launch.sh --vnc localhost:5901 --listen 6080\n\
 tail -f /dev/null' > /start.sh && chmod +x /start.sh
 
