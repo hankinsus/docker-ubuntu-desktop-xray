@@ -5,8 +5,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 # 1. 安装核心组件
 RUN apt update -y && apt install --no-install-recommends -y \
     xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify \
-    sudo vim net-tools curl wget unzip dbus-x11 \
+    sudo xterm vim net-tools curl wget git tzdata \
+    dbus-x11 x11-utils x11-xserver-utils x11-apps \
     locales fonts-wqy-zenhei software-properties-common \
+    gnupg ca-certificates unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. 中文环境与 Firefox
