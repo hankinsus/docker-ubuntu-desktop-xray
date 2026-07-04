@@ -3,15 +3,14 @@ FROM --platform=linux/amd64 ubuntu:22.04
 # 基础环境设置，防止构建中途弹出交互窗口
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. 一次性安装所有核心组件
-# 包含图形界面、VNC、浏览器、网络工具、以及构建所需的 GPG 验证工具
+# 1. 一次性安装所有核心组件，特别增加了 unzip
 RUN apt update -y && apt install --no-install-recommends -y \
     xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify \
     sudo xterm vim net-tools curl wget git tzdata \
     dbus-x11 x11-utils x11-xserver-utils x11-apps \
     locales fonts-wqy-zenhei software-properties-common gnupg \
-    openssl ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+    openssl ca-certificates unzip \
+    && rm -rf /var/lib/apt/lists/*
 
 # 2. 生成中文环境
 RUN echo "zh_CN.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen zh_CN.UTF-8
