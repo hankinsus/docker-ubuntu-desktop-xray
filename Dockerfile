@@ -1,4 +1,9 @@
-# 1. 基础组件安装（加入了 gnupg）
+FROM --platform=linux/amd64 ubuntu:22.04
+
+# 设置环境变量，防止交互式等待
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 1. 统一安装所有必要组件
 RUN apt update -y && apt install --no-install-recommends -y \
     xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify \
     sudo xterm init systemd vim net-tools curl wget git tzdata \
@@ -6,25 +11,25 @@ RUN apt update -y && apt install --no-install-recommends -y \
     locales fonts-wqy-zenhei software-properties-common gnupg \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. 生成中文语言包
+# 2. 中文环境配置
 RUN echo "zh_CN.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen zh_CN.UTF-8
 ENV LANG=zh_CN.UTF-8
 ENV LANGUAGE=zh_CN:zh
 ENV LC_ALL=zh_CN.UTF-8
 
-# 3. Firefox PPA 安装 (现在因为有了 gnupg，这一步会成功)
+# 3. Firefox 安装
 RUN add-apt-repository ppa:mozillateam/ppa -y && \
     echo 'Package: *\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001' > /etc/apt/preferences.d/mozilla-firefox && \
     apt update -y && apt install -y firefox xubuntu-icon-theme
 
-# 4. 安装 Xray Core
+# 4. Xray 安装
 RUN wget https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip && \
     unzip Xray-linux-64.zip -d /usr/local/bin/ && rm Xray-linux-64.zip && \
     chmod +x /usr/local/bin/xray
 RUN mkdir -p /etc/xray
 RUN echo '{"inbounds":[{"port":8080,"protocol":"vless","settings":{"clients":[{"id":"9b191c56-d0fd-6889-ac99-3016ba36a189"}],"decryption":"none"},"streamSettings":{"network":"ws","wsSettings":{"path":"/"}}}],"outbounds":[{"protocol":"freedom"}]}' > /etc/xray/config.json
 
-# 5. 配置电源管理与自动启动脚本
+# 5. 电源管理配置
 RUN mkdir -p /root/.vnc && \
     echo '#!/bin/sh\n\
 xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/inactivity-on-ac -s 0\n\
@@ -32,7 +37,7 @@ xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/blank-on-ac -s 0\n\
 xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/dpms-enabled -s false\n\
 startxfce4 &' > /root/.vnc/xstartup && chmod +x /root/.vnc/xstartup
 
-# 6. 统一启动入口
+# 6. 统一入口
 EXPOSE 5901 6080 8080
 CMD bash -c "touch /root/.Xauthority && \
     vncserver -localhost no -SecurityTypes None -geometry 1280x720 --I-KNOW-THIS-IS-INSECURE && \
